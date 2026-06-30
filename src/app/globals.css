@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  /* Slate colors remapped for light mode white + blue theme with high contrast text */
+  --color-slate-950: #f0f4f9; /* main body background (light grey-blue) */
+  --color-slate-900: #ffffff; /* card & section backgrounds (pure white) */
+  --color-slate-800: #c2dcf8; /* borders & separators (slightly darker light blue tint) */
+  --color-slate-700: #cbd5e1; /* sub-borders */
+  --color-slate-650: #64748b;
+  --color-slate-600: #475569; /* placeholders / muted subtext */
+  --color-slate-500: #334155; /* standard text */
+  --color-slate-400: #1e293b; /* primary content text */
+  --color-slate-300: #0f172a; /* title headers */
+  --color-slate-200: #020617; /* dark headers */
+  --color-slate-100: #000000; /* absolute black text */
+  
+  /* Indigo colors remapped to darker professional blue shades for readability */
+  --color-indigo-950: #eff6ff; /* light blue highlights background */
+  --color-indigo-900: #dbeafe;
+  --color-indigo-800: #bfdbfe;
+  --color-indigo-600: #1d4ed8;
+  --color-indigo-500: #2563eb; /* primary accent blue */
+  --color-indigo-400: #1d4ed8; /* darker blue (secondary accent) */
+  --color-indigo-300: #1e3a8a; /* navy blue */
+  --color-indigo-200: #0f172a; /* deep navy blue text */
+  --color-indigo-100: #000000; /* dark slate/black */
+
+  /* Emerald/Green colors remapped to darker professional green shades */
+  --color-emerald-500: #15803d; /* darker emerald */
+  --color-emerald-400: #166534; 
+  --color-emerald-300: #14532d;
+  --color-emerald-200: #064e3b; /* dark forest green */
+  --color-emerald-100: #022c22;
+  
+  /* Teal colors remapped to dark teal shades */
+  --color-teal-500: #0f766e;
+  --color-teal-400: #115e59;
+}
+
+:root {
+  --background: #f0f4f9;
+  --foreground: #000000;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

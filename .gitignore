@@ -1,0 +1,61 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js Build Outputs & Cache
+/.next/
+/out/
+
+# Electron Main TS Compilation output
+/dist/
+/release/
+
+# Testing & Coverage
+/coverage
+
+# Production Builds
+/build
+
+# Local Databases (SQLite)
+*.db
+*.db-journal
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# Agent Scratch directories
+/scratch/
+.system_generated/
+/task.md
+/implementation_plan.md
+/walkthrough.md
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.pem
+
+# Log Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+/src/generated/prisma

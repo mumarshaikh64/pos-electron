@@ -1,0 +1,436 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------
+// 1. AUTHENTICATION & USER MANAGEMENT
+// ----------------------------------------------------
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  name          String
+  passwordHash  String
+  roleId        String
+  role          Role           @relation(fields: [roleId], references: [id])
+  status        String         @default("ACTIVE") // ACTIVE, INACTIVE
+  cashRegisters CashRegister[]
+  expenses      Expense[]
+  activityLogs  ActivityLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([roleId])
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique // ADMIN, MANAGER, CASHIER, SALESMAN, WAREHOUSE_MANAGER
+  description String?
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "products:create", "sales:view"
+  description String?
+  roles       Role[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 2. CONTACTS / PARTIES
+// ----------------------------------------------------
+
+model Customer {
+  id              String         @id @default(uuid())
+  name            String
+  companyName     String?
+  phone           String         @unique
+  email           String?
+  cnic            String?
+  ntn             String?
+  address         String?
+  openingBalance  Float          @default(0)
+  creditLimit     Float          @default(0)
+  salesInvoices   SalesInvoice[]
+  ledgerAccountId String         @unique
+  ledgerAccount   Account        @relation(fields: [ledgerAccountId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Supplier {
+  id              String            @id @default(uuid())
+  name            String
+  companyName     String?
+  phone           String            @unique
+  email           String?
+  address         String?
+  openingBalance  Float             @default(0)
+  purchaseInvoices PurchaseInvoice[]
+  ledgerAccountId String            @unique
+  ledgerAccount   Account           @relation(fields: [ledgerAccountId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// ----------------------------------------------------
+// 3. PRODUCT & INVENTORY
+// ----------------------------------------------------
+
+model Product {
+  id             String           @id @default(uuid())
+  name           String
+  sku            String           @unique
+  barcode        String           @unique
+  description    String?
+  categoryId     String
+  category       Category         @relation(fields: [categoryId], references: [id])
+  brandId        String
+  brand          Brand            @relation(fields: [brandId], references: [id])
+  unitId         String
+  unit           Unit             @relation(fields: [unitId], references: [id])
+  
+  purchasePrice  Float            @default(0)
+  wholesalePrice Float            @default(0)
+  retailPrice    Float            @default(0)
+  minimumPrice   Float            @default(0)
+  
+  minimumStock   Float            @default(0)
+  openingStock   Float            @default(0)
+  currentStock   Float            @default(0)
+  taxPercentage  Float            @default(0)
+  status         String           @default("ACTIVE") // ACTIVE, INACTIVE
+  images         ProductImage[]
+  
+  warehouseStock WarehouseStock[]
+  purchaseItems  PurchaseItem[]
+  salesItems     SalesItem[]
+  stockMovements StockMovement[]
+  
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([unitId])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Unit {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Warehouse {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  address        String?
+  warehouseStock WarehouseStock[]
+  purchases      PurchaseInvoice[]
+  sales          SalesInvoice[]
+  stockMovements StockMovement[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model WarehouseStock {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  stock       Float     @default(0)
+
+  @@unique([productId, warehouseId])
+}
+
+// ----------------------------------------------------
+// 4. TRANSACTION MODULES
+// ----------------------------------------------------
+
+model PurchaseInvoice {
+  id              String         @id
+  supplierId      String
+  supplier        Supplier       @relation(fields: [supplierId], references: [id])
+  invoiceDate     DateTime
+  warehouseId     String
+  warehouse       Warehouse      @relation(fields: [warehouseId], references: [id])
+  referenceNumber String?
+  
+  discount        Float          @default(0)
+  taxAmount       Float          @default(0)
+  shippingCharges Float          @default(0)
+  grandTotal      Float          @default(0)
+  paidAmount      Float          @default(0)
+  dueAmount       Float          @default(0)
+  paymentMethod   String         // CASH, BANK, CREDIT
+  notes           String?
+  attachmentUrl   String?
+  
+  items           PurchaseItem[]
+  journalEntryId  String?        @unique
+  journalEntry    JournalEntry?  @relation(fields: [journalEntryId], references: [id])
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([supplierId])
+  @@index([warehouseId])
+}
+
+model PurchaseItem {
+  id                String          @id @default(uuid())
+  purchaseInvoiceId String
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id])
+  quantity          Float
+  purchasePrice     Float
+  wholesalePrice    Float
+  retailPrice       Float
+  discount          Float           @default(0)
+  taxAmount         Float           @default(0)
+  total             Float
+
+  @@index([purchaseInvoiceId])
+  @@index([productId])
+}
+
+model SalesInvoice {
+  id              String        @id
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  invoiceDate     DateTime
+  warehouseId     String
+  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id])
+  cashRegisterId  String?
+  cashRegister    CashRegister? @relation(fields: [cashRegisterId], references: [id])
+  
+  discount        Float         @default(0)
+  taxAmount       Float         @default(0)
+  grandTotal      Float         @default(0)
+  paidAmount      Float         @default(0)
+  dueAmount       Float         @default(0)
+  paymentMethod   String        // CASH, BANK, CREDIT
+  notes           String?
+  
+  items           SalesItem[]
+  journalEntryId  String?       @unique
+  journalEntry    JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([warehouseId])
+}
+
+model SalesItem {
+  id             String       @id @default(uuid())
+  salesInvoiceId String
+  salesInvoice   SalesInvoice @relation(fields: [salesInvoiceId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  quantity       Float
+  wholesalePrice Float
+  discount       Float        @default(0)
+  taxAmount      Float        @default(0)
+  total          Float
+
+  @@index([salesInvoiceId])
+  @@index([productId])
+}
+
+model StockMovement {
+  id          String    @id @default(uuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  quantity    Float
+  type        String    // PURCHASE, SALE, TRANSFER_IN, TRANSFER_OUT, ADJUSTMENT, DAMAGE, EXPIRED
+  referenceId String?   // SalesInvoiceId or PurchaseInvoiceId
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+// ----------------------------------------------------
+// 5. DOUBLE ENTRY ACCOUNTING SYSTEM
+// ----------------------------------------------------
+
+model Account {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  type         String        // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  balance      Float         @default(0)
+  journalItems JournalItem[]
+  
+  customer     Customer?
+  supplier     Supplier?
+  bankAccount  BankAccount?
+  cashAccount  CashAccount?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model JournalEntry {
+  id              String           @id @default(uuid())
+  date            DateTime
+  reference       String?
+  description     String?
+  items           JournalItem[]
+  purchaseInvoice PurchaseInvoice?
+  salesInvoice    SalesInvoice?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model JournalItem {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        Account      @relation(fields: [accountId], references: [id])
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  description    String?
+
+  @@index([journalEntryId])
+  @@index([accountId])
+}
+
+// ----------------------------------------------------
+// 6. BANKING, CASH REGISTERS & EXPENSES
+// ----------------------------------------------------
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  accountName   String
+  accountNumber String   @unique
+  bankName      String
+  branch        String?
+  balance       Float    @default(0)
+  accountId     String   @unique
+  account       Account  @relation(fields: [accountId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CashAccount {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  balance   Float    @default(0)
+  accountId String   @unique
+  account   Account  @relation(fields: [accountId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CashRegister {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  openedAt       DateTime       @default(now())
+  closedAt       DateTime?
+  openingBalance Float
+  cashIn         Float          @default(0)
+  cashOut        Float          @default(0)
+  salesAmount    Float          @default(0)
+  expenseAmount  Float          @default(0)
+  currentBalance Float
+  status         String         @default("OPEN") // OPEN, CLOSED
+  salesInvoices  SalesInvoice[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model ExpenseCategory {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Expense {
+  id            String          @id @default(uuid())
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  amount        Float
+  paymentMethod String          // CASH, BANK
+  reference     String?
+  attachmentUrl String?
+  description   String?
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([userId])
+}
+
+// ----------------------------------------------------
+// 7. UTILITIES, SETTINGS & LOGS
+// ----------------------------------------------------
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
