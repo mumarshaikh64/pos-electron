@@ -1,8 +1,14 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
 import { prisma } from '../db';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 let loggedInUser: any = null;
+
+const getSessionPath = () => {
+  return path.join(app.getPath('userData'), 'session.json');
+};
 
 function verifyPassword(password: string, passwordHash: string): boolean {
   const parts = passwordHash.split(':');
@@ -13,6 +19,18 @@ function verifyPassword(password: string, passwordHash: string): boolean {
 }
 
 export function registerAuthHandlers() {
+  // Load session from file on startup
+  try {
+    const sessionPath = getSessionPath();
+    if (fs.existsSync(sessionPath)) {
+      const data = fs.readFileSync(sessionPath, 'utf-8');
+      loggedInUser = JSON.parse(data);
+      console.log('[IPC Auth] Restored session from file:', loggedInUser?.username);
+    }
+  } catch (err) {
+    console.error('[IPC Auth] Error reading session file on startup:', err);
+  }
+
   ipcMain.handle('auth:login', async (_event, { username, password }) => {
     try {
       console.log(`[IPC Auth] Login attempt for username: "${username}"`);
@@ -50,6 +68,15 @@ export function registerAuthHandlers() {
         permissions: user.role.permissions.map((p) => p.name),
       };
 
+      // Persist session to file
+      try {
+        const sessionPath = getSessionPath();
+        fs.writeFileSync(sessionPath, JSON.stringify(loggedInUser, null, 2), 'utf-8');
+        console.log('[IPC Auth] Saved session to file.');
+      } catch (err) {
+        console.error('[IPC Auth] Error saving session to file:', err);
+      }
+
       console.log(`[IPC Auth] Successful login for: "${username}". Session user set.`, loggedInUser);
 
       // Log activity
@@ -84,6 +111,15 @@ export function registerAuthHandlers() {
       }
     }
     loggedInUser = null;
+    try {
+      const sessionPath = getSessionPath();
+      if (fs.existsSync(sessionPath)) {
+        fs.unlinkSync(sessionPath);
+        console.log('[IPC Auth] Deleted session file.');
+      }
+    } catch (err) {
+      console.error('[IPC Auth] Error deleting session file:', err);
+    }
     return { success: true };
   });
 

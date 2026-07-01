@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
-    setLoading(true);
     try {
       if (typeof window !== 'undefined' && window.electron) {
         const res = await window.electron.invoke('auth:login', { username, password });
@@ -60,13 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Desktop bridge not initialized.' };
     } catch (err: any) {
       return { success: false, error: err.message || 'An error occurred' };
-    } finally {
-      setLoading(false);
     }
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
       if (typeof window !== 'undefined' && window.electron) {
         await window.electron.invoke('auth:logout');
@@ -75,8 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/login');
     } catch (err) {
       console.error('Logout error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 

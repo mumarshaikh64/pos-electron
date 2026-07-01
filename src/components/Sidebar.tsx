@@ -52,9 +52,7 @@ export function Sidebar() {
     'Purchases': true,
     'Sales': true,
     'Inventory': true,
-    'Banking': true,
     'Expenses': true,
-    'Accounting': true,
     'Reports': true,
     'Users': true,
     'Settings': true,
@@ -115,31 +113,11 @@ export function Sidebar() {
       ],
     },
     {
-      title: 'Banking',
-      icon: <Landmark className="w-5 h-5 text-pink-400" />,
-      permission: 'accounting:view',
-      items: [
-        { title: 'Bank Accounts', href: '/banking/accounts' },
-        { title: 'Cash Accounts', href: '/banking/cash' },
-      ],
-    },
-    {
       title: 'Expenses',
       icon: <TrendingDown className="w-5 h-5 text-red-400" />,
       permission: 'accounting:view',
       items: [
         { title: 'Expense List', href: '/expenses' },
-      ],
-    },
-    {
-      title: 'Accounting',
-      icon: <BookOpen className="w-5 h-5 text-yellow-400" />,
-      permission: 'accounting:view',
-      items: [
-        { title: 'General Ledger', href: '/accounting/ledger' },
-        { title: 'Trial Balance', href: '/accounting/trial-balance' },
-        { title: 'Profit & Loss', href: '/accounting/profit-loss' },
-        { title: 'Balance Sheet', href: '/accounting/balance-sheet' },
       ],
     },
     {

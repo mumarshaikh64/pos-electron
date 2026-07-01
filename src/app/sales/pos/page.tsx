@@ -17,7 +17,9 @@ import {
   User,
   Coins,
   Barcode,
-  Sparkles
+  Sparkles,
+  Minus,
+  Plus
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
@@ -180,7 +182,7 @@ export default function POSPage() {
         ...item,
         quantity: qty,
         taxAmount: tax,
-        total: baseVal - item.discount + tax,
+        total: baseVal - item.discount,
       };
       setItems(updated);
     } else {
@@ -204,7 +206,7 @@ export default function POSPage() {
         taxPercentage: prod.taxPercentage,
         discount: 0,
         taxAmount: tax,
-        total: baseVal + tax,
+        total: baseVal,
         unitName: prod.unit?.name || 'Pcs',
         currentStock: prod.currentStock,
       };
@@ -237,7 +239,7 @@ export default function POSPage() {
       wholesalePrice: price,
       discount,
       taxAmount: tax,
-      total: baseVal - discount + tax,
+      total: baseVal - discount,
     };
     setItems(updated);
   };
@@ -554,16 +556,45 @@ export default function POSPage() {
                       {/* Qty edit */}
                       <div className="flex items-center gap-1">
                         <span className="text-[8px] text-slate-500 font-bold uppercase">Qty:</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max={item.currentStock}
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleUpdateItemField(idx, 'quantity', parseInt(e.target.value, 10) || 1)
-                          }
-                          className="w-12 bg-slate-900 border border-slate-800 rounded py-0.5 px-1 text-center text-[10px] font-bold text-slate-200 focus:outline-none"
-                        />
+                        <div className="flex items-center bg-slate-900 border border-slate-800 rounded overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newQty = Math.max(1, item.quantity - 1);
+                              handleUpdateItemField(idx, 'quantity', newQty);
+                            }}
+                            className="px-1.5 py-1 text-slate-400 hover:text-rose-500 hover:bg-slate-800/50 transition cursor-pointer select-none"
+                          >
+                            <Minus className="w-2.5 h-2.5" />
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.currentStock}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val)) {
+                                handleUpdateItemField(
+                                  idx,
+                                  'quantity',
+                                  Math.min(item.currentStock, Math.max(1, val))
+                                );
+                              }
+                            }}
+                            className="w-8 bg-transparent text-center text-[10px] font-bold text-slate-200 focus:outline-none border-x border-slate-800/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newQty = Math.min(item.currentStock, item.quantity + 1);
+                              handleUpdateItemField(idx, 'quantity', newQty);
+                            }}
+                            className="px-1.5 py-1 text-slate-400 hover:text-emerald-500 hover:bg-slate-800/50 transition cursor-pointer select-none"
+                          >
+                            <Plus className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Price edit */}
@@ -573,10 +604,9 @@ export default function POSPage() {
                           type="number"
                           step="0.01"
                           value={item.wholesalePrice}
-                          onChange={(e) =>
-                            handleUpdateItemField(idx, 'wholesalePrice', parseFloat(e.target.value) || 0)
-                          }
-                          className="w-16 bg-slate-900 border border-slate-800 rounded py-0.5 px-1 text-center text-[10px] font-bold text-emerald-400 focus:outline-none"
+                          readOnly
+                          disabled
+                          className="w-16 bg-slate-900/50 border border-slate-800 rounded py-0.5 px-1 text-center text-[10px] font-bold text-emerald-400 opacity-80 cursor-not-allowed focus:outline-none"
                         />
                       </div>
 
