@@ -52,7 +52,7 @@ jobs:
         shell: powershell
         run: |
           echo "Building installer for version ${{ steps.get_version.outputs.version }}"
-          iscc /DMyAppVersion="${{ steps.get_version.outputs.version }}" build/installer.iss
+          iscc /DMyAppVersion="${{ steps.get_version.outputs.version }}" installer.iss
 
       - name: Upload Installer Artifact
         uses: actions/upload-artifact@v4
