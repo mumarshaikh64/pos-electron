@@ -37,6 +37,11 @@ jobs:
       - name: Compile Electron Unpacked
         run: npm run package
 
+      - name: List Release Directory
+        shell: powershell
+        run: |
+          Get-ChildItem -Path release -Recurse
+
       - name: Extract Version
         id: get_version
         shell: powershell
