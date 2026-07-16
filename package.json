@@ -54,13 +54,30 @@
       "dist/**/*",
       "package.json",
       "node_modules/**/*",
-      "prisma/**/*",
       {
         "from": "out",
         "to": "dist/renderer/out",
         "filter": [
           "**/*"
         ]
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "prisma",
+        "to": "prisma"
+      },
+      {
+        "from": "node_modules/.prisma",
+        "to": "node_modules/.prisma"
+      },
+      {
+        "from": "node_modules/@prisma/client",
+        "to": "node_modules/@prisma/client"
+      },
+      {
+        "from": "node_modules/prisma",
+        "to": "node_modules/prisma"
       }
     ],
     "win": {

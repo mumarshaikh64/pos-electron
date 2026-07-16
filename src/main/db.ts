@@ -44,8 +44,15 @@ function runMigrations() {
     console.log('[Database] Applying database migrations...');
     
     // Resolve packed paths for production build
-    const schemaPath = path.join(process.resourcesPath, 'app', 'prisma', 'schema.prisma');
-    const prismaCliPath = path.join(process.resourcesPath, 'app', 'node_modules', 'prisma', 'build', 'index.js');
+    let schemaPath = path.join(process.resourcesPath, 'app', 'prisma', 'schema.prisma');
+    let prismaCliPath = path.join(process.resourcesPath, 'app', 'node_modules', 'prisma', 'build', 'index.js');
+    
+    if (!fs.existsSync(schemaPath)) {
+      schemaPath = path.join(process.resourcesPath, 'prisma', 'schema.prisma');
+    }
+    if (!fs.existsSync(prismaCliPath)) {
+      prismaCliPath = path.join(process.resourcesPath, 'node_modules', 'prisma', 'build', 'index.js');
+    }
     
     if (fs.existsSync(schemaPath) && fs.existsSync(prismaCliPath)) {
       const cmd = `node "${prismaCliPath}" migrate deploy --schema="${schemaPath}"`;
