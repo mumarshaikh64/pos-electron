@@ -46,7 +46,7 @@ jobs:
         shell: powershell
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
 
       - name: Compile Inno Setup Installer
         shell: powershell
