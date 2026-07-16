@@ -10,7 +10,8 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build": "npm run build:main && npm run build:renderer",
     "start": "electron .",
-    "lint": "eslint"
+    "lint": "eslint",
+    "package": "electron-builder --win --dir"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -19,6 +20,7 @@
     "jsbarcode": "^3.12.3",
     "lucide-react": "^0.468.0",
     "next": "15.5.19",
+    "prisma": "^6.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.80.0",
@@ -37,11 +39,40 @@
     "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.19",
-    "prisma": "^6.2.1",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",
     "wait-on": "^9.0.10"
+  },
+  "build": {
+    "appId": "com.medicalpos.app",
+    "productName": "MedicalPOS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "node_modules/**/*",
+      "prisma/**/*",
+      {
+        "from": "out",
+        "to": "dist/renderer/out",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
