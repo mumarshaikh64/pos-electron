@@ -43,10 +43,10 @@ jobs:
 
       - name: Extract Version
         id: get_version
-        shell: powershell
+        shell: bash
         run: |
-          $version = (Get-Content package.json | ConvertFrom-Json).version
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Compile Inno Setup Installer
         shell: powershell
