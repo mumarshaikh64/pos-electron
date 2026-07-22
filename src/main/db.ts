@@ -2,7 +2,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PrismaClient } from '@prisma/client';
-import { execSync } from 'child_process';
+import { autoSeed } from './seed';
 
 let prisma: PrismaClient;
 
@@ -21,54 +21,40 @@ export function initDatabase(): PrismaClient {
     if (!fs.existsSync(userDataPath)) {
       fs.mkdirSync(userDataPath, { recursive: true });
     }
+
+    // If database.db doesn't exist in userData, copy pre-populated template from extraResources
+    if (!fs.existsSync(dbPath)) {
+      let templatePath = path.join(process.resourcesPath, 'prisma', 'dev.db');
+      if (!fs.existsSync(templatePath)) {
+        templatePath = path.join(process.resourcesPath, 'app', 'prisma', 'dev.db');
+      }
+      if (!fs.existsSync(templatePath)) {
+        templatePath = path.join(process.cwd(), 'prisma', 'dev.db');
+      }
+
+      if (fs.existsSync(templatePath)) {
+        console.log(`[Database] Copying pre-populated SQLite database from ${templatePath} to ${dbPath}`);
+        fs.copyFileSync(templatePath, dbPath);
+      } else {
+        console.warn(`[Database] Pre-populated database template not found at ${templatePath}`);
+      }
+    }
   }
 
   // Set the environment variable before instantiating PrismaClient
   process.env.DATABASE_URL = `file:${dbPath}`;
   console.log(`[Database] SQLite database location: ${dbPath}`);
 
-  // In production, apply migrations on startup
-  if (!isDev) {
-    runMigrations();
-  }
-
   prisma = new PrismaClient({
     log: isDev ? ['query', 'info', 'warn', 'error'] : ['error'],
   });
-  
-  return prisma;
-}
 
-function runMigrations() {
-  try {
-    console.log('[Database] Applying database migrations...');
-    
-    // Resolve packed paths for production build
-    let schemaPath = path.join(process.resourcesPath, 'app', 'prisma', 'schema.prisma');
-    let prismaCliPath = path.join(process.resourcesPath, 'app', 'node_modules', 'prisma', 'build', 'index.js');
-    
-    if (!fs.existsSync(schemaPath)) {
-      schemaPath = path.join(process.resourcesPath, 'prisma', 'schema.prisma');
-    }
-    if (!fs.existsSync(prismaCliPath)) {
-      prismaCliPath = path.join(process.resourcesPath, 'node_modules', 'prisma', 'build', 'index.js');
-    }
-    
-    if (fs.existsSync(schemaPath) && fs.existsSync(prismaCliPath)) {
-      const cmd = `node "${prismaCliPath}" migrate deploy --schema="${schemaPath}"`;
-      execSync(cmd, {
-        env: {
-          ...process.env,
-          DATABASE_URL: process.env.DATABASE_URL,
-        },
-      });
-      console.log('[Database] Database migrations deployed successfully.');
-    } else {
-      console.warn('[Database] Missing packed schema.prisma or prisma CLI binary. Skipping startup migrations.');
-    }
-  } catch (error) {
-    console.error('[Database] Failed to deploy startup migrations:', error);
-  }
+  // Automatically run JS-based autoSeed in background to guarantee admin user & initial data
+  autoSeed(prisma).catch((err) => {
+    console.error('[Database] Auto-seed error:', err);
+  });
+
+  return prisma;
 }
 
 export { prisma };
